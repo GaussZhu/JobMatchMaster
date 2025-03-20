@@ -394,7 +394,7 @@ def display_resume_summary(resume_data):
         """, unsafe_allow_html=True)
 
 def display_job_matches(match_results, jobs):
-    """显示美化的职位匹配结果"""
+    """显示美化的职位匹配结果 - 使用Streamlit原生组件"""
     st.markdown('<h3 class="subtitle">最佳匹配职位</h3>', unsafe_allow_html=True)
     
     for i, match in enumerate(match_results[:5]):
@@ -406,55 +406,60 @@ def display_job_matches(match_results, jobs):
         edu_percent = int(match.get('education_match', 0) * 100)
         exp_percent = int(match.get('experience_match', 0) * 100)
         
-        # 构建技能标签HTML
-        skills_html = ""
-        for skill in match.get('matched_skills', []):
-            skills_html += f'<span class="tag">{skill}</span>'
-        
-        # 使用HTML渲染卡片主体
-        st.markdown(f"""
-        <div class="job-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h3 style="color: #1976D2; margin-top: 0;">{match.get('job_title', '未知职位')}</h3>
-                    <p style="color: #455A64;">{match.get('company', '未知公司')} | {job.get('location', '未知地点')}</p>
-                </div>
-                <div class="match-score-container">
-                    <div class="match-score">{match_percent}%</div>
+        # 使用Streamlit容器
+        with st.container():
+            # 标题和公司信息仍然使用HTML
+            st.markdown(f"""
+            <div class="job-card" style="padding-bottom: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3 style="color: #1976D2; margin-top: 0;">{match.get('job_title', '未知职位')}</h3>
+                        <p style="color: #455A64;">{match.get('company', '未知公司')} | {job.get('location', '未知地点')}</p>
+                    </div>
+                    <div class="match-score-container">
+                        <div class="match-score">{match_percent}%</div>
+                    </div>
                 </div>
             </div>
+            """, unsafe_allow_html=True)
             
-            <div class="divider"></div>
+            # 使用Streamlit原生组件显示匹配详情
+            st.write("**匹配详情**")
             
-            <h4 style="color: #455A64;">匹配详情</h4>
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                st.write("技能匹配")
+            with col2:
+                st.progress(skill_percent/100)
             
-            <p><strong>技能匹配</strong></p>
-            <div class="progress-container">
-                <div class="progress-bar" style="width: {skill_percent}%"></div>
-            </div>
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                st.write("教育背景匹配")
+            with col2:
+                st.progress(edu_percent/100)
             
-            <p><strong>教育背景匹配</strong></p>
-            <div class="progress-container">
-                <div class="progress-bar" style="width: {edu_percent}%"></div>
-            </div>
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                st.write("工作经验匹配")
+            with col2:
+                st.progress(exp_percent/100)
             
-            <p><strong>工作经验匹配</strong></p>
-            <div class="progress-container">
-                <div class="progress-bar" style="width: {exp_percent}%"></div>
-            </div>
+            # 匹配的技能
+            st.write("**匹配的技能**")
+            if match.get('matched_skills'):
+                # 使用列布局显示技能标签
+                cols = st.columns(3)
+                for idx, skill in enumerate(match.get('matched_skills')):
+                    cols[idx % 3].markdown(f"<span class='tag'>{skill}</span>", unsafe_allow_html=True)
+            else:
+                st.write("无匹配技能")
             
-            <div class="divider"></div>
+            # 使用Streamlit原生按钮
+            if st.button(f"申请该职位 #{i+1}", key=f"apply_btn_{i}"):
+                st.success("申请功能示例 - 您点击了申请按钮")
             
-            <h4 style="color: #455A64;">匹配的技能</h4>
-            <div>
-                {skills_html if skills_html else '<p>无匹配技能</p>'}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # 使用Streamlit原生按钮替代HTML按钮
-        if st.button(f"申请该职位 #{i+1}", key=f"apply_btn_{i}"):
-            st.success("申请功能示例 - 您点击了申请按钮")
+            st.markdown("<hr>", unsafe_allow_html=True)
+
 
 def create_sidebar():
     """创建美化的侧边栏"""
