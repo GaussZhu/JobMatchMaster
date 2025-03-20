@@ -113,20 +113,17 @@ def apply_custom_css():
     }
     
     /* 按钮样式 */
-    .custom-button {
+    .stButton>button {
         background-color: #2E7D32;
         color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 5px;
-        text-align: center;
-        cursor: pointer;
         font-weight: 500;
-        display: inline-block;
-        margin-top: 1rem;
         border: none;
+        border-radius: 5px;
+        padding: 0.5rem 1rem;
+        margin-top: 1rem;
     }
     
-    .custom-button:hover {
+    .stButton>button:hover {
         background-color: #1B5E20;
     }
     
@@ -414,6 +411,7 @@ def display_job_matches(match_results, jobs):
         for skill in match.get('matched_skills', []):
             skills_html += f'<span class="tag">{skill}</span>'
         
+        # 使用HTML渲染卡片主体
         st.markdown(f"""
         <div class="job-card">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -451,10 +449,12 @@ def display_job_matches(match_results, jobs):
             <div>
                 {skills_html if skills_html else '<p>无匹配技能</p>'}
             </div>
-            
-            <button class="custom-button" onclick="alert('申请功能示例')">申请该职位</button>
         </div>
         """, unsafe_allow_html=True)
+        
+        # 使用Streamlit原生按钮替代HTML按钮
+        if st.button(f"申请该职位 #{i+1}", key=f"apply_btn_{i}"):
+            st.success("申请功能示例 - 您点击了申请按钮")
 
 def create_sidebar():
     """创建美化的侧边栏"""
