@@ -5,5 +5,5 @@ libxss1
 fonts-liberation
 libappindicator3-1
 xvfb
-chromium=119.0.6045.9-1
-chromium-driver=119.0.6045.9-1
+chromium
+chromium-driver
