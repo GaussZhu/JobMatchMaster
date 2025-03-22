@@ -1,3 +1,10 @@
-chromium
-chromium-driver
-libxss1
+# packages.txt 完整内容
+libgl1-mesa-glx     # OpenGL支持
+libgconf-2-4        # 系统配置库
+libnss3             # 网络安全服务
+libxss1             # X11屏幕保护
+fonts-liberation    # 字体支持
+libappindicator3-1  # 系统托盘支持
+xvfb                # 虚拟帧缓冲
+chromium=119.0.6045.9-1  # 指定浏览器版本
+chromium-driver=119.0.6045.9-1  # 匹配驱动版本
