@@ -27,14 +27,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 class JobSearchIntegration:
-    """职位搜索集成类，整合网页抓取和简历分析功能"""
-    
     def __init__(self):
-        """初始化职位搜索集成类"""
         self.resume_analyzer = ResumeAnalyzer()
         self.job_scraper = None
         if SCRAPER_AVAILABLE:
             try:
+                # 传递headless参数（保持云环境兼容）
                 self.job_scraper = JobScraper(headless=True)
             except Exception as e:
                 logger.error(f"初始化JobScraper失败: {str(e)}")
