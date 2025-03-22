@@ -4,3 +4,4 @@ numpy==1.26.4
 beautifulsoup4==4.13.3
 webdriver-manager==4.0.1
 nltk==3.8.1
+selenium==4.15.2
