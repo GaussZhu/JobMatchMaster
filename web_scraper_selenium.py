@@ -27,35 +27,40 @@ logger = logging.getLogger(__name__)
 
 class JobScraper:
     """职位抓取类，使用Selenium和BeautifulSoup抓取招聘网站的职位信息"""
-    
-    def __init__(self):
+    def __init__(self, headless=True):  # 新增headless参数
         """初始化职位抓取器"""
         self.driver = None
         self.supported_platforms = ["智联招聘", "前程无忧", "BOSS直聘", "拉勾网", "猎聘网"]
         self.cache_dir = os.path.join(os.getcwd(), "cache")
+        self.headless = headless  # 保存参数
         
         # 确保缓存目录存在
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
     
-    def _initialize_driver(self) -> None:
-        """初始化Selenium WebDriver"""
-        try:
-            chrome_options = Options()
-            chrome_options.add_argument("--headless")  # 无头模式
-            chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--disable-gpu")
+def _initialize_driver(self) -> bool:
+    """初始化Selenium WebDriver"""
+    try:
+        chrome_options = Options()
+        
+        # 根据headless参数设置模式
+        if self.headless:
+            chrome_options.add_argument("--headless=new")  # 新版无头模式
+        else:
             chrome_options.add_argument("--window-size=1920,1080")
-            chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             
-            service = Service(ChromeDriverManager().install())
-            self.driver = webdriver.Chrome(service=service, options=chrome_options)
-            logger.info("WebDriver初始化成功")
-            return True
-        except Exception as e:
-            logger.error(f"WebDriver初始化失败: {str(e)}")
-            return False
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        
+        service = Service(ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        logger.info("WebDriver初始化成功")
+        return True
+    except Exception as e:
+        logger.error(f"WebDriver初始化失败: {str(e)}")
+        return False
     
     def _close_driver(self) -> None:
         """关闭WebDriver"""
