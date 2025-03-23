@@ -12,11 +12,15 @@ import datetime
 
 # 尝试导入集成模块 (使用Selenium版本)
 try:
-    from job_search_integration_selenium import JobSearchIntegration, get_enhanced_functions
+    from job_search_integration_selenium_fixed import JobSearchIntegration, get_enhanced_functions
     INTEGRATION_AVAILABLE = True
 except ImportError:
-    st.error("集成模块导入失败，某些功能可能不可用")
-    INTEGRATION_AVAILABLE = False
+    try:
+        from job_search_integration_selenium import JobSearchIntegration, get_enhanced_functions
+        INTEGRATION_AVAILABLE = True
+    except ImportError:
+        st.error("集成模块导入失败，某些功能可能不可用")
+        INTEGRATION_AVAILABLE = False
 
 # 配置页面
 st.set_page_config(
@@ -162,7 +166,7 @@ def main():
         st.markdown("### 职位搜索设置")
         keywords = st.text_input("关键词", value="Python 开发工程师")
         location = st.text_input("地点", value="北京")
-        platform = st.selectbox("数据来源", ["模拟数据", "智联招聘", "前程无忧"])
+        platform = st.selectbox("数据来源", ["模拟数据", "智联招聘", "前程无忧", "BOSS直聘", "拉勾网", "猎聘网"])
         limit = st.slider("结果数量", min_value=5, max_value=20, value=10)
         
         # 开始分析按钮
@@ -289,38 +293,40 @@ def main():
         jobs = st.session_state.jobs
         match_results = st.session_state.match_results
         
-        # 创建职位ID到职位的映射
-        job_map = {job['id']: job for job in jobs}
-        
         # 显示匹配结果
-        for match in match_results[:5]:  # 只显示前5个匹配结果
-            job_id = match.get('job_id', '')
-            job = job_map.get(job_id, {})
+        for i, match in enumerate(match_results):
+            if i >= 10:  # 最多显示10个结果
+                break
             
-            if not job:
-                continue
+            job = match.get('job', {})
+            score = match.get('score', 0)
+            match_details = match.get('match_details', {})
             
-            # 匹配分数
-            match_score = match.get('match_score', 0)
+            # 确定匹配分数的颜色
             score_class = "match-score-low"
-            if match_score >= 80:
+            if score >= 80:
                 score_class = "match-score-high"
-            elif match_score >= 60:
+            elif score >= 60:
                 score_class = "match-score-medium"
             
-            # 创建可展开的职位卡片
-            with st.expander(f"{job.get('title', '未知职位')} - {job.get('company', '未知公司')}"):
+            # 创建可折叠的卡片
+            with st.expander(f"{i+1}. {job.get('title', '未知')} - {job.get('company', '未知')} (匹配度: {score:.1f}%)"):
                 col1, col2 = st.columns([3, 1])
                 
                 with col1:
                     st.markdown(f"**公司:** {job.get('company', '未知')}")
                     st.markdown(f"**地点:** {job.get('location', '未知')}")
                     st.markdown(f"**薪资:** {job.get('salary_range', '未知')}")
-                    st.markdown(f"**来源:** {job.get('platform', '未知')}")
+                    st.markdown(f"**平台:** {job.get('platform', '未知')}")
+                    
+                    # 显示职位URL
+                    url = job.get('url', '')
+                    if url:
+                        st.markdown(f"**链接:** [查看详情]({url})")
                     
                     # 显示职位描述
                     st.markdown("**职位描述:**")
-                    st.markdown(job.get('description', '无描述'))
+                    st.markdown(f"{job.get('description', '无描述')}")
                     
                     # 显示要求技能
                     required_skills = job.get('required_skills', [])
@@ -331,67 +337,30 @@ def main():
                             skill_html += f'<span style="background-color: #E1F5FE; padding: 0.2rem 0.5rem; margin: 0.2rem; border-radius: 0.5rem; display: inline-block;">{skill}</span>'
                         st.markdown(skill_html, unsafe_allow_html=True)
                     
-                    # 显示匹配的技能
-                    matched_skills = match.get('matched_skills', [])
-                    if matched_skills:
-                        st.markdown("**匹配的技能:**")
-                        skill_html = ""
-                        for skill in matched_skills:
-                            skill_html += f'<span style="background-color: #E8F5E9; padding: 0.2rem 0.5rem; margin: 0.2rem; border-radius: 0.5rem; display: inline-block;">{skill}</span>'
-                        st.markdown(skill_html, unsafe_allow_html=True)
-                    
-                    # 显示改进建议
-                    improvement_suggestions = match.get('improvement_suggestions', [])
-                    if improvement_suggestions:
-                        st.markdown("**改进建议:**")
-                        for suggestion in improvement_suggestions:
-                            st.markdown(f"- {suggestion}")
+                    # 显示教育和经验要求
+                    st.markdown(f"**教育要求:** {job.get('education_requirement', '未知')}")
+                    st.markdown(f"**经验要求:** {job.get('experience_requirement', '未知')}")
                 
                 with col2:
                     # 显示匹配分数
-                    st.markdown(f'<div class="match-score {score_class}">{match_score}</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="success-box">', unsafe_allow_html=True)
+                    st.markdown(f'<div class="match-score {score_class}">{score:.1f}%</div>', unsafe_allow_html=True)
                     st.markdown('<div style="text-align: center;">匹配度</div>', unsafe_allow_html=True)
-                    
-                    # 显示各维度匹配度
-                    st.markdown('<div style="margin-top: 1rem;">', unsafe_allow_html=True)
-                    st.markdown(f"技能匹配: {match.get('skill_match', 0)}%")
-                    st.progress(match.get('skill_match', 0) / 100)
-                    st.markdown(f"教育匹配: {match.get('education_match', 0)}%")
-                    st.progress(match.get('education_match', 0) / 100)
-                    st.markdown(f"经验匹配: {match.get('experience_match', 0)}%")
-                    st.progress(match.get('experience_match', 0) / 100)
-                    st.markdown(f"方向匹配: {match.get('direction_match', 0)}%")
-                    st.progress(match.get('direction_match', 0) / 100)
                     st.markdown('</div>', unsafe_allow_html=True)
-        
-        # 显示更多匹配结果
-        if len(match_results) > 5:
-            with st.expander("显示更多匹配结果"):
-                for match in match_results[5:]:
-                    job_id = match.get('job_id', '')
-                    job = job_map.get(job_id, {})
                     
-                    if not job:
-                        continue
-                    
-                    st.markdown(f"**{job.get('title', '未知职位')} - {job.get('company', '未知公司')}** (匹配度: {match.get('match_score', 0)}%)")
-                    st.markdown(f"地点: {job.get('location', '未知')} | 薪资: {job.get('salary_range', '未知')}")
-                    st.markdown("---")
+                    # 显示匹配详情
+                    st.markdown("**匹配详情:**")
+                    st.markdown(f"技能匹配: {match_details.get('skills_match', 0):.1f}%")
+                    st.markdown(f"教育匹配: {match_details.get('education_match', 0):.1f}%")
+                    st.markdown(f"经验匹配: {match_details.get('experience_match', 0):.1f}%")
         
-        # 提供下载结果的链接
-        if hasattr(st.session_state, 'integration') and st.session_state.integration:
-            result_files = [f for f in os.listdir(st.session_state.integration.cache_dir) if f.startswith('match_results_')]
-            if result_files:
-                latest_file = sorted(result_files)[-1]
-                result_path = os.path.join(st.session_state.integration.cache_dir, latest_file)
-                st.markdown(
-                    get_binary_file_downloader_html(result_path, '下载匹配结果'),
-                    unsafe_allow_html=True
-                )
+        # 显示数据来源信息
+        st.markdown('<div class="warning-box">', unsafe_allow_html=True)
+        if jobs[0].get('platform') == "模拟数据":
+            st.markdown("**注意:** 当前显示的是模拟数据，因为无法连接到实际招聘网站或者所选平台暂不支持。")
+        else:
+            st.markdown(f"**数据来源:** {jobs[0].get('platform', '未知')}")
+        st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        st.error(f"应用运行出错: {str(e)}")
-        st.info("如果您看到此错误，请尝试刷新页面或联系管理员。")
+    main()

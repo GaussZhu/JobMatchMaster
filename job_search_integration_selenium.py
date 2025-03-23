@@ -136,7 +136,8 @@ class JobSearchIntegration:
                 "description": f"这是一个{job_type}职位，需要{', '.join(skills[:3])}等技能。",
                 "required_skills": skills,
                 "education_requirement": "本科",
-                "experience_requirement": 3
+                "experience_requirement": "3-5年",  # 修改为字符串格式
+                "experience_years": 3  # 保持整数格式
             }
             
             jobs.append(job)
